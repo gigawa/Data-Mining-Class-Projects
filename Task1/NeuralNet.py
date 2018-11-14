@@ -1,7 +1,11 @@
 import numpy as np
 
+ignoredAttributes = []
+keptAttributes = []
+
 def readData():
     data = []
+    attributeCount = [0] * 26364
     objectIndex = -1
 
     #read in training set
@@ -16,6 +20,10 @@ def readData():
                 objectIndex += 1
 
             data[objectIndex][int(values[1]) - 1] = float(values[2])
+            attributeCount[int(values[1]) - 1] += 1
+
+    IgnoreAttributes(attributeCount, len(data))
+    data = RemapData(data)
 
     return data
 
@@ -34,6 +42,22 @@ def readLabels():
 
     return data
 
+def IgnoreAttributes(attributeCount, dataCount):
+    for index, attribute in enumerate(attributeCount):
+        if (float(attribute) / float(dataCount)) < 0.05:
+            ignoredAttributes.append(index)
+        else:
+            keptAttributes.append(index)
+
+def RemapData(data):
+    newData = []
+    for object in data:
+        newObject = []
+        for index in keptAttributes:
+            newObject.append(object[index])
+        newData.append(newObject)
+    return newData
+
 def sigmoid(x):
     return 1.0/(1+ np.exp(-x))
 
@@ -43,8 +67,8 @@ def sigmoid_derivative(x):
 class NeuralNetwork:
     def __init__(self, x, y):
         self.input      = x
-        self.weights1   = np.random.rand(self.input.shape[1], 10000)
-        self.weights2   = np.random.rand(10000, 1)
+        self.weights1   = np.random.rand(self.input.shape[1], 1000)
+        self.weights2   = np.random.rand(1000, 1)
         self.y          = y
         self.output     = np.zeros(self.y.shape)
 
@@ -67,19 +91,39 @@ class NeuralNetwork:
         return output
 
 
+def PrintCSV(data):
+    f = open("data.csv", "w")
+    for index in range(417):
+        f.write(str(index) + ', ')
+    f.write('\n')
+
+    for object in data:
+        line = ""
+        for attributes in object:
+            line = line + str(attributes) + ", "
+        f.write(line + '\n')
+    f.close()
+
+
 if __name__ == "__main__":
     X = np.array(readData())
     y = np.array(readLabels())
+    print(str(y))
+    #PrintCSV(X)
     #X = np.array([[0,0,1], [0,1,1], [1,0,1], [1,1,1]])
     #y = np.array([[0],[1],[1],[0]])
+    print('Ignored: ' + str(len(ignoredAttributes)))
+    print('Kept: ' + str(len(keptAttributes)))
+
+    #'''
     nn = NeuralNetwork(X,y)
 
-    for i in range(10):
-        print('Loop: ' + str(i))
+    for i in range(500):
+        if i % 100 == 0:
+            print('Loop: ' + str(i))
         nn.feedforward()
-        print('Feed Forward')
         nn.backprop()
-        print('Back Prop')
 
-    print(nn.output)
-    print("Prediction: " + str(nn.predict(X)))
+    f = open("output.txt", "w")
+    f.write(str(nn.output))
+    #'''
