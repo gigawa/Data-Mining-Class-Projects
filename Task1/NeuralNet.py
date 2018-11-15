@@ -67,23 +67,31 @@ def sigmoid_derivative(x):
 class NeuralNetwork:
     def __init__(self, x, y):
         self.input      = x
-        self.weights1   = np.random.rand(self.input.shape[1], 1000)
-        self.weights2   = np.random.rand(1000, 1)
+        self.weights1   = np.random.rand(self.input.shape[1], 1500)
+        #self.weights3   = np.random.rand(500, 500)
+        self.weights2   = np.random.rand(1500, 1)
         self.y          = y
         self.output     = np.zeros(self.y.shape)
 
     def feedforward(self):
         self.layer1 = sigmoid(np.dot(self.input, self.weights1))
+        #self.layer2 = sigmoid(np.dot(self.layer1, self.weights3))
         self.output = sigmoid(np.dot(self.layer1, self.weights2))
 
     def backprop(self):
         # application of the chain rule to find derivative of the loss function with respect to weights2 and weights1
         d_weights2 = np.dot(self.layer1.T, (2*(self.y - self.output) * sigmoid_derivative(self.output)))
         d_weights1 = np.dot(self.input.T,  (np.dot(2*(self.y - self.output) * sigmoid_derivative(self.output), self.weights2.T) * sigmoid_derivative(self.layer1)))
+        #d_weights3 = np.dot(self.layer1.T,  (np.dot(2*(self.y - self.output) * sigmoid_derivative(self.output), self.weights2.T) * sigmoid_derivative(self.layer2)))
 
         # update the weights with the derivative (slope) of the loss function
         self.weights1 += d_weights1
         self.weights2 += d_weights2
+
+        print('d_weights1: ' + str(d_weights1))
+        print('d_weights2: ' + str(d_weights2))
+        print('Y: ' + str(self.y))
+        #self.weights3 += d_weights3
 
     def predict(self, input):
         predictedlayer1 = sigmoid(np.dot(input, self.weights1))
@@ -118,12 +126,14 @@ if __name__ == "__main__":
     #'''
     nn = NeuralNetwork(X,y)
 
-    for i in range(500):
-        if i % 100 == 0:
+    for i in range(100):
+        if i % 25 == 0:
             print('Loop: ' + str(i))
         nn.feedforward()
         nn.backprop()
 
     f = open("output.txt", "w")
-    f.write(str(nn.output))
+
+    for value in nn.output:
+        f.write(str(value))
     #'''
