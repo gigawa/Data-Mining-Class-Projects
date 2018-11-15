@@ -100,10 +100,6 @@ def stdev(numbers):
     variance = sum([pow(x-avg,2) for x in numbers])/float(len(numbers)-1)
     stdev = math.sqrt(variance)
     if stdev == 0.0:
-        '''print("stdev: " + str(math.sqrt(variance)))
-        print("var: " + str(variance))
-        print("avg: " + str(avg))
-        print("num: " + str(numbers))'''
         stdev = 0.00000000000001
     return stdev
 
