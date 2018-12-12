@@ -5,18 +5,15 @@ import csv
 ignoredAttributes = []
 keptAttributes = []
 
-def loadCsv(filename):
-	lines = csv.reader(open(filename, "r"))
-	dataset = list(lines)
-	for i in range(len(dataset)):
-		dataset[i] = [float(x) for x in dataset[i]]
-	return dataset
-
+# read in data
+# if training data, determine which attributes to ignore
+# then remap data based on kept attributes
 def readData(filename, training):
     data = []
     attributeCount = [0] * 26364
     attributeValues = [[] for _ in range(26364)]
     objectIndex = -1
+    max = 0
 
     #read in training set
     with open(filename) as file:
@@ -31,6 +28,9 @@ def readData(filename, training):
 
             data[objectIndex][int(values[1]) - 1] = float(values[2])
 
+            if int(values[1]) - 1 > max:
+                max = int(values[1]) - 1
+
             if training:
                 attributeCount[int(values[1]) - 1] += 1
 
@@ -44,6 +44,7 @@ def readData(filename, training):
 
     return data
 
+# read labels of training data
 def readLabels(filename, data):
     index = 0
     #read in labels for training set
@@ -56,9 +57,10 @@ def readLabels(filename, data):
 
     return data
 
+# determine which attributes to keep based on how often they occur
+# must be in at least 5% of objects to be kept
 def IgnoreAttributes(attributeCount, attributeValues, dataCount):
     for index, attribute in enumerate(attributeCount):
-        #print('Attribute Length: ' + str(len(attributeValues[index])))
         if (float(attribute) / float(dataCount)) < 0.05 or len(attributeValues[index]) < 2:
             ignoredAttributes.append(index)
         else:
@@ -73,6 +75,20 @@ def RemapData(data):
             newObject.append(object[index])
         newData.append(newObject)
     return newData
+
+def WriteCSV(data, filename):
+    f = open(filename, "w")
+    id = 0
+    object = data[0]
+    for value in object:
+        f.write(str(id) + ', ')
+        id += 1
+    f.write('\n')
+
+    for object in data:
+        for value in object:
+            f.write(str(value) + ', ')
+        f.write('\n')
 
 def splitDataset(dataset, splitRatio):
 	trainSize = int(len(dataset) * splitRatio)
@@ -157,6 +173,7 @@ def WritePredictions(filename, predictions):
     for value in predictions:
         f.write(str(value) + '\n')
 
+# Use split to check accuracy of model
 def TestTraining():
     splitRatio = 0.85
     dataset = readData('training.txt', True)
@@ -173,10 +190,14 @@ def TestTraining():
     accuracy = getAccuracy(testSet, predictions)
     print('Accuracy: {0}%'.format(accuracy))
 
+# Make predictions on given test data
 def EvaluateData():
     dataset = readData('training.txt', True)
     dataset = readLabels('label_training.txt', dataset)
     testset = readData('testing.txt', False)
+
+    WriteCSV(dataset, 'trainingP.txt')
+    WriteCSV(testset, 'testingP.txt')
 
     # prepare model
     summaries = summarizeByClass(dataset)
